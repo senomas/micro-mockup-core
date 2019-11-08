@@ -1,0 +1,30 @@
+{
+  "name": "mockup-core",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "npx tslint --project . --fix && npx tsc",
+    "start": "yarn build && node dist/server.js"
+  },
+  "devDependencies": {
+    "@netflix/tslint-config": "^1.0.1",
+    "chai": "^4.2.0",
+    "chai-graphql": "^4.0.0",
+    "chai-http": "^4.3.0",
+    "gitlog": "^3.1.2",
+    "gulp": "^4.0.2",
+    "gulp-typescript": "^5.0.1",
+    "mocha": "^6.2.1",
+    "mocha-typescript": "^1.1.17",
+    "nodemon": "^1.19.2",
+    "shelljs": "^0.8.3",
+    "ts-node": "^8.4.1",
+    "tslint": "^5.20.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "bunyan": "^1.8.12"
+  }
+}
