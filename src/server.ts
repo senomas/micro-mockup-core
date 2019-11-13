@@ -1,6 +1,7 @@
 import { createServer } from "net";
 import * as bunyan from "bunyan";
 import * as fs from "fs";
+import { EventEmitter } from "events";
 
 if (!fs.existsSync("log")) {
   fs.mkdirSync("log");
@@ -68,7 +69,18 @@ const transactions = [
   }
 ];
 
-function onMessage(socket, req) {
+const events = new EventEmitter();
+
+events.on("message", (socket, connId, req) => {
+  logger.info({
+    socket: {
+      type: 'mockup',
+      event: 'receive',
+      connId,
+      messageType: req.command,
+      [`message_${req.command || '_unknown'}`]: req
+    }
+  }, "socket");
   if (req.command === 'echo') {
     socket.write(JSON.stringify(req));
     socket.write("\n");
@@ -102,23 +114,33 @@ function onMessage(socket, req) {
     logger.error({ req }, "invalid message");
     socket.end();
   }
-}
+});
 
 export const server = createServer(socket => {
-  const client = `${socket.remoteAddress}:${socket.remotePort}`;
-  logger.info({ client }, "CONNECTION");
+  const connId = `${socket.remoteAddress}:${socket.remotePort}-${socket.localPort}`;
+  logger.info({ socket: { type: 'mockup', event: 'accept', connId } }, "socket");
   let buf = Buffer.from([]);
   socket.on('data', data => {
+    logger.info({ socket: { type: 'mockup', event: 'data', connId, data: data.toString('utf8') } }, "socket");
     buf = Buffer.concat([buf, data], buf.length + data.length);
     let ix = buf.indexOf('\n');
     while (ix >= 0) {
       const msg = JSON.parse(buf.slice(0, ix).toString('utf8'));
-      onMessage(socket, msg);
+      events.emit("message", socket, connId, msg);
+      logger.info({
+        socket: {
+          type: 'mockup',
+          event: 'receive',
+          connId,
+          messageType: msg.command,
+          [`message_${msg.command || '_unknown'}`]: msg
+        }
+      }, "socket");
       buf = buf.slice(ix + 1);
       ix = buf.indexOf('\n');
     }
   });
-  socket.on('close', data => {
-    logger.info({ client, data }, "CLOSE");
+  socket.on('close', () => {
+    logger.info({ socket: { type: 'mockup', event: 'close', connId } }, "socket");
   });
 }).listen(9000, "0.0.0.0");
